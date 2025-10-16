@@ -11,7 +11,6 @@ import (
 )
 
 func ServeWebSocket(hub *hub.Hub, w http.ResponseWriter, r *http.Request) {
-	// Получаем токен из куки вместо query параметра
 	tokenStr, err := auth.GetJWTCookie(r)
 	if err != nil {
 		w.WriteHeader(http.StatusUnauthorized)

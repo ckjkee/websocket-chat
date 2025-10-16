@@ -16,13 +16,11 @@ type UserRecord struct {
 	CreatedAt    time.Time
 }
 
-// UserRepository описывает методы доступа к пользователям
 type UserRepository interface {
 	CreateUser(ctx context.Context, username, passwordHash string) error
 	GetUserByUsername(ctx context.Context, username string) (*UserRecord, error)
 }
 
-// PostgresUserRepository реализация репозитория пользователей на PostgreSQL
 type PostgresUserRepository struct {
 	db *sql.DB
 }
@@ -31,7 +29,6 @@ func NewPostgresUserRepository(db *sql.DB) *PostgresUserRepository {
 	return &PostgresUserRepository{db: db}
 }
 
-// AutoMigrate создаёт необходимые таблицы, если их нет
 func (r *PostgresUserRepository) AutoMigrate(ctx context.Context) error {
 	const query = `
 	CREATE TABLE IF NOT EXISTS users (

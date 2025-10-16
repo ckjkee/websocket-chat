@@ -38,42 +38,34 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
-// SetUserRepository wires an external user repository (e.g., PostgreSQL)
 func SetUserRepository(repo repository.UserRepository) {
 	userRepo = repo
 }
 
-// Функция для хеширования пароля
 func hashPassword(password string) string {
 	hash := sha256.Sum256([]byte(password))
 	return hex.EncodeToString(hash[:])
 }
 
-// Функция для проверки пароля
 func checkPassword(password, hash string) bool {
 	return hashPassword(password) == hash
 }
 
-// Функция для регистрации нового пользователя
 func RegisterUser(username, password string) error {
-	// Проверяем минимальные требования к паролю
 	if len(password) < 6 {
 		return errors.New("password must be at least 6 characters long")
 	}
 
-	// Если настроен внешний репозиторий — используем его
 	if userRepo != nil {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		// Проверяем уникальность пользователя
 		if _, err := userRepo.GetUserByUsername(ctx, username); err == nil {
 			return errors.New("user already exists")
 		} else if !errors.Is(err, sql.ErrNoRows) {
 			return err
 		}
 
-		// Создаём пользователя
 		return userRepo.CreateUser(ctx, username, hashPassword(password))
 	}
 
@@ -91,7 +83,6 @@ func RegisterUser(username, password string) error {
 	return nil
 }
 
-// Функция для аутентификации пользователя
 func AuthenticateUser(username, password string) (*User, error) {
 	if userRepo != nil {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -123,7 +114,6 @@ func AuthenticateUser(username, password string) (*User, error) {
 	return user, nil
 }
 
-// Функция для получения пользователя по имени
 func GetUser(username string) (*User, error) {
 	if userRepo != nil {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -153,15 +143,13 @@ func GenerateToken(username string) (string, error) {
 	claims := Claims{
 		Username: username,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)), // Увеличиваем время жизни
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
 		},
 	}
-
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString(SecretKey)
 }
 
-// Функция для генерации токена для пользователя
 func GenerateTokenForUser(user *User) (string, error) {
 	return GenerateToken(user.Username)
 }
@@ -182,7 +170,6 @@ func ValidateToken(tokenStr string) (*Claims, error) {
 	return nil, errors.New("invalid token")
 }
 
-// Функция для получения времени истечения токена
 func GetTokenExpiry(tokenStr string) (time.Time, error) {
 	claims, err := ValidateToken(tokenStr)
 	if err != nil {
@@ -196,12 +183,9 @@ func GetTokenExpiry(tokenStr string) (time.Time, error) {
 	return time.Time{}, errors.New("token has no expiry time")
 }
 
-// Функция для установки JWT в куку
 func SetJWTCookie(w http.ResponseWriter, token string) {
-	// Получаем время истечения токена
 	expiry, err := GetTokenExpiry(token)
 	if err != nil {
-		// Если не удалось получить время истечения, используем 24 часа
 		expiry = time.Now().Add(24 * time.Hour)
 	}
 
@@ -212,11 +196,10 @@ func SetJWTCookie(w http.ResponseWriter, token string) {
 		HttpOnly: true,
 		Secure:   false, // true для HTTPS
 		SameSite: http.SameSiteLaxMode,
-		Expires:  expiry, // Используем время истечения из токена
+		Expires:  expiry,
 	})
 }
 
-// Функция для получения JWT из куки
 func GetJWTCookie(r *http.Request) (string, error) {
 	cookie, err := r.Cookie("jwt_token")
 	if err != nil {
@@ -225,7 +208,6 @@ func GetJWTCookie(r *http.Request) (string, error) {
 	return cookie.Value, nil
 }
 
-// Функция для удаления JWT куки (logout)
 func ClearJWTCookie(w http.ResponseWriter) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     "jwt_token",
@@ -234,20 +216,18 @@ func ClearJWTCookie(w http.ResponseWriter) {
 		HttpOnly: true,
 		Secure:   false, // true для HTTPS
 		SameSite: http.SameSiteLaxMode,
-		Expires:  time.Now().Add(-1 * time.Hour), // Прошлое время = удаление
+		Expires:  time.Now().Add(-1 * time.Hour),
 	})
 }
 
 // --- Refresh Token ---
 const RefreshTokenTTL = 7 * 24 * time.Hour // 7 дней
 
-// Структура для пары токенов
 type TokenPair struct {
 	AccessToken  string
 	RefreshToken string
 }
 
-// Генерация пары токенов
 func GenerateTokenPair(user *User, repo *repository.RedisRepository) (*TokenPair, error) {
 	accessToken, err := GenerateToken(user.Username)
 	if err != nil {
@@ -264,7 +244,6 @@ func GenerateTokenPair(user *User, repo *repository.RedisRepository) (*TokenPair
 	return &TokenPair{AccessToken: accessToken, RefreshToken: refreshToken}, nil
 }
 
-// Проверка refresh токена и получение пользователя
 func ValidateRefreshToken(token string, repo *repository.RedisRepository) (*User, error) {
 	if repo == nil {
 		return nil, errors.New("refresh token storage not available")
@@ -277,7 +256,6 @@ func ValidateRefreshToken(token string, repo *repository.RedisRepository) (*User
 	return GetUser(username)
 }
 
-// Удаление refresh токена
 func DeleteRefreshToken(token string, repo *repository.RedisRepository) error {
 	if repo == nil {
 		return nil
@@ -286,7 +264,6 @@ func DeleteRefreshToken(token string, repo *repository.RedisRepository) error {
 	return repo.DeleteRefreshToken(ctx, token)
 }
 
-// Установка refresh токена в куку
 func SetRefreshCookie(w http.ResponseWriter, token string) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     "refresh_token",
@@ -308,7 +285,6 @@ func GetRefreshCookie(r *http.Request) (string, error) {
 	return cookie.Value, nil
 }
 
-// Удаление refresh токена из куки
 func ClearRefreshCookie(w http.ResponseWriter) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     "refresh_token",

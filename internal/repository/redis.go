@@ -36,17 +36,14 @@ func (r *RedisRepository) GetMessages(ctx context.Context, room string) ([]strin
 	return r.client.LRange(ctx, "chat:"+room, 0, 49).Result()
 }
 
-// Сохранить refresh токен для пользователя
 func (r *RedisRepository) SaveRefreshToken(ctx context.Context, username, token string, expiresIn time.Duration) error {
 	return r.client.Set(ctx, "refresh:"+token, username, expiresIn).Err()
 }
 
-// Получить username по refresh токену
 func (r *RedisRepository) GetRefreshToken(ctx context.Context, token string) (string, error) {
 	return r.client.Get(ctx, "refresh:"+token).Result()
 }
 
-// Удалить refresh токен
 func (r *RedisRepository) DeleteRefreshToken(ctx context.Context, token string) error {
 	return r.client.Del(ctx, "refresh:"+token).Err()
 }
