@@ -1,0 +1,14 @@
+# Prometheus config for rt-chat
+global:
+  scrape_interval: 5s
+  evaluation_interval: 5s
+
+scrape_configs:
+  - job_name: "rt-chat"
+    static_configs:
+      # If Prometheus runs natively on the same Windows host as the app:
+      - targets: ["localhost:8000"]
+      # If Prometheus runs in Docker Desktop on Windows, use this instead:
+      # - targets: ["host.docker.internal:8000"]
+
+

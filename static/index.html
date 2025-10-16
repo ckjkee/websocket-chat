@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebSocket Chat</title>
+    <style>
+        #chat { display: none; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .logout-btn { padding: 8px 16px; background: #ff4444; color: white; border: none; cursor: pointer; }
+        .session-info { 
+            display: flex; 
+            align-items: center; 
+            gap: 20px; 
+            font-size: 14px; 
+            color: #666; 
+        }
+        .session-timer { 
+            background: #f0f0f0; 
+            padding: 4px 8px; 
+            border-radius: 4px; 
+            font-family: monospace; 
+        }
+        .auth-container {
+            max-width: 400px;
+            margin: 50px auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: white;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        .btn {
+            width: 100%;
+            padding: 12px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .btn-secondary {
+            background: #6c757d;
+        }
+        .btn-secondary:hover {
+            background: #545b62;
+        }
+        .toggle-form {
+            text-align: center;
+            margin-top: 15px;
+        }
+        .toggle-form a {
+            color: #007bff;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .toggle-form a:hover {
+            text-decoration: underline;
+        }
+        .error {
+            color: #dc3545;
+            margin-top: 10px;
+            text-align: center;
+        }
+        .success {
+            color: #28a745;
+            margin-top: 10px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div id="login" class="auth-container">
+        <div style="text-align:center; color:#007bff; margin-bottom:10px; font-size:14px;">Теперь поддерживаются refresh токены и автоматическое продление сессии!</div>
+        <div id="loginForm">
+            <h2>Вход в чат</h2>
+            <form id="loginFormElement">
+                <div class="form-group">
+                    <label for="usernameInput">Имя пользователя:</label>
+                    <input id="usernameInput" type="text" required />
+                </div>
+                <div class="form-group">
+                    <label for="passwordInput">Пароль:</label>
+                    <input id="passwordInput" type="password" required />
+                </div>
+                <button type="submit" class="btn">Войти</button>
+                <div id="loginError" class="error" style="display: none;"></div>
+            </form>
+            <div class="toggle-form">
+                <a onclick="showRegisterForm()">Нет аккаунта? Зарегистрироваться</a>
+            </div>
+        </div>
+        
+        <div id="registerForm" style="display: none;">
+            <h2>Регистрация</h2>
+            <form id="registerFormElement">
+                <div class="form-group">
+                    <label for="regUsernameInput">Имя пользователя:</label>
+                    <input id="regUsernameInput" type="text" required />
+                </div>
+                <div class="form-group">
+                    <label for="regPasswordInput">Пароль:</label>
+                    <input id="regPasswordInput" type="password" required />
+                </div>
+                <div class="form-group">
+                    <label for="regPasswordConfirmInput">Подтвердите пароль:</label>
+                    <input id="regPasswordConfirmInput" type="password" required />
+                </div>
+                <button type="submit" class="btn">Зарегистрироваться</button>
+                <div id="registerError" class="error" style="display: none;"></div>
+                <div id="registerSuccess" class="success" style="display: none;"></div>
+            </form>
+            <div class="toggle-form">
+                <a onclick="showLoginForm()">Уже есть аккаунт? Войти</a>
+            </div>
+        </div>
+    </div>
+    
+    <div id="chat">
+        <div class="header">
+            <div>
+                <h2>Чат</h2>
+                <div class="session-info">
+                    <span>Пользователь: <span id="currentUser">-</span></span>
+                    <span>Сессия истекает через: <span id="sessionTimer" class="session-timer">--:--</span></span>
+                </div>
+            </div>
+            <button class="logout-btn" onclick="logout()">Выйти</button>
+        </div>
+        <ul id="messages"></ul>
+        <input id="messageInput" placeholder="Сообщение" />
+        <button id="sendButton">Отправить</button>
+    </div>
+    <script src="chat.js"></script>
+</body>
+</html>
