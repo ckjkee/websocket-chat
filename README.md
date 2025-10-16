@@ -132,38 +132,6 @@ http://192.168.0.172:8000  # для доступа из локальной се�
 - Обновление таймера сессии
 - Автоматические выходы
 
-## Расширение функциональности
-
-### Добавление refresh токенов
-```go
-type Claims struct {
-    Username string `json:"username"`
-    TokenType string `json:"token_type"` // "access" или "refresh"
-    jwt.RegisteredClaims
-}
-```
-
-### Добавление "Remember Me"
-```go
-func SetJWTCookie(w http.ResponseWriter, token string, remember bool) {
-    var expiry time.Time
-    if remember {
-        expiry = time.Now().Add(30 * 24 * time.Hour) // 30 дней
-    } else {
-        expiry = time.Now().Add(24 * time.Hour) // 24 часа
-    }
-    // ...
-}
-```
-
-### Добавление уведомлений
-```javascript
-// Уведомление за 5 минут до истечения
-if (timeLeft <= 300 && !this.warningShown) {
-    this.showWarning("Сессия истекает через 5 минут!");
-    this.warningShown = true;
-}
-```
 ## Лицензия
 
 MIT License
